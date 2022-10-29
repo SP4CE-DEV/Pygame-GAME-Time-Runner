@@ -18,8 +18,9 @@ Redwood Colonnade - Lifeformed
 Unborn Self - Koelle
 Moog City 2 - C418 (legendary)
 
-All the game shitty art & graphic design: me
-Shitty coding: also me
-Sound effects: mostly made by me from random sounds
+All the game shitty art & graphic design: me.
+Shitty coding: also me.
+Sound effects: mostly made by me from editing other sounds
+Im a gigachad to conclude
 
 
