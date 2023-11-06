@@ -57,7 +57,9 @@ class Player_Hitbox(pygame.sprite.Sprite):
             self.HP -= 5
             self.taking_damage = True
         else: self.taking_damage = False
+
         if self.HP <= 0: self.Alive = False
+
         if self.rect.colliderect(berryBushRect):
             self.berryBushCollided = True
         else: self.berryBushCollided = False
@@ -115,7 +117,7 @@ class PlayerAnimation(pygame.sprite.Sprite):
             if self.currentFrame >= len(self.RunAnimFrameList): self.currentFrame = 0
             self.image = self.RunAnimFrameList[int(self.currentFrame)]
 
-        if self.AnimState == 'jump':
+        elif self.AnimState == 'jump':
             self.currentFrame += AnimSpeed
             self.jumpPower -= self.gravity
             self.rect.bottom -= self.jumpPower
@@ -124,7 +126,7 @@ class PlayerAnimation(pygame.sprite.Sprite):
             if self.currentFrame >= len(self.JumpAnimFrameList): self.currentFrame = 0
             self.image = self.JumpAnimFrameList[int(self.currentFrame)]
         
-        if  self.AnimState == 'crash':
+        elif  self.AnimState == 'crash':
             self.currentFrame += AnimSpeed
             self.jumpPower = -12
             self.jumpPower -= self.gravity
@@ -301,7 +303,7 @@ menu_music_list.append(pygame.mixer.Sound('audio/menu music 1.mp3'))
 menu_music_list.append(pygame.mixer.Sound('audio/menu music 2.mp3'))
 menu_music_list.append(pygame.mixer.Sound('audio/menu music 3.mp3'))
 menu_music_list.append(pygame.mixer.Sound('audio/menu music 4.mp3'))
-menu_music = random.choice(menu_music_list)
+menu_music = menu_music_list[0]
 menu_music_volume = 0.2
 menu_music_last = -1
 menu_music.play()
@@ -311,17 +313,18 @@ menu_music.set_volume(menu_music_volume)
 prevMenuImg = 1
 menuImgAlreadyChosen = False
 menuImgCordMap = [0,-800,-1600,-2400] #y cords of menu screen image mapping
-menuScreenImg = random.choice(menuImgCordMap)
+menuScreenImg = menuImgCordMap[3]
 
 #----------------PAUSE----------------PAUSE----------------PAUSE---------------
 pauseScreenIMG = pygame.image.load('images/pause/screen.png').convert_alpha()
+FirstEscapeInput = True
 
 while True:
 #████████████████████████████ \/ GAME loop \/ ████████████████████████████ \/ GAME loop \/ ████████████████████████████ \/ GAME loop \/ ████████████████████████████
 #████████████████████████████ \/ GAME loop \/ ████████████████████████████ \/ GAME loop \/ ████████████████████████████ \/ GAME loop \/ ████████████████████████████
 
     while Game:
-
+        print("GAME RUNNING")
         menuSprites.remove(buttonGO)
         menuSprites.remove(buttonSHOP)
         menuSprites.remove(buttonSETTINGS)
@@ -337,18 +340,24 @@ while True:
         gameSprites.add(PlanetTime)
 
         for event in pygame.event.get(): 
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit()
+            
             if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+                Pause = True
                 PauseDrawn = False #ensures the pause screen is drawn once, to keep transparency
                 Game = False
-                Pause = True
+                Menu = False
                 menuImgAlreadyChosen = False
+                FirstEscapeInput = True
                 print('  mode -> PAUSE')
-            if pygame.key.get_pressed()[pygame.K_SPACE]:
+
+            elif pygame.key.get_pressed()[pygame.K_SPACE]:
                 PlayerAnimHandle.AnimState = 'jump'
-            if event.type == pygame.MOUSEBUTTONDOWN:
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mousePos = pygame.mouse.get_pos()
 
@@ -360,7 +369,7 @@ while True:
                         score_boost_PopUp_FadeIn = True
                     # slow down time planet
                     if PlanetTime.rect.collidepoint(mousePos) and PlanetTime.ready_for_click:
-                        movementSpeed = (movementSpeed // 2) + 4
+                        movementSpeed = (movementSpeed // 2.5) + 4
                         print('planet SlowMotion clicked')
                         PlanetTime.Fade_Out = True
 
@@ -392,7 +401,7 @@ while True:
             skyXspeed += 0.2
             if nightOverlayAlpha <= 210:
                 nightOverlayAlpha += 2
-        else: skyXspeed = 0.9 #0.7 org
+        else: skyXspeed = 0.9 #0.7 original
         skyPosX -= skyXspeed
         if skyPosX < -6800: skyPosX = 0
     # planet boost
@@ -431,9 +440,8 @@ while True:
         if not PlayerHitbox.Alive:
             Game, Menu = False, True
 
-            pygame.mixer.pause()
-            game_music = random.choice(game_music_list)
-            menu_music = random.choice(menu_music_list)
+            random.choice(menu_music_list).play()
+            game_music.set_volume(0)
             
             PlayerHitbox.Alive,PlayerHitbox.HP = True, 255
             score = 0
@@ -500,9 +508,10 @@ while True:
     # switching menu background every re-enter
     if menuImgAlreadyChosen == False:
         while menuScreenImg == prevMenuImg:
-            menuScreenImg = random.choice(menuImgCordMap)
+            menuScreenImg = menuImgCordMap[1]
         menuImgAlreadyChosen = True
         prevMenuImg = menuScreenImg
+        pygame.mixer.unpause()
 
     while Menu:
         for event in pygame.event.get(): 
@@ -510,11 +519,12 @@ while True:
                 pygame.quit()
                 raise SystemExit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 mousePos = pygame.mouse.get_pos()
                 if buttonGO.rect.collidepoint(mousePos):
                     transition_game = True
                     game_start_AUD.play()
+                    
 
         screen.blit(menuScreenMapIMG, (0,menuScreenImg))
         menuSprites.draw(screen)
@@ -526,7 +536,8 @@ while True:
             if transition_game_X > -180:
                 Game = True
                 Menu = False
-                game_music.play()
+                Pause = False
+                game_music = random.choice(game_music_list).play()
                 menu_music.set_volume(0)
 
         menuSprites.update()
@@ -535,31 +546,41 @@ while True:
 
 #████████████████████████████ \/ PAUSE loop \/
     while Pause:
+        print("PAUSE STARTED")
+        pygame.mixer.pause()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit()
-            if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-                print('  mode -> GAME')
-                Pause = False
-                Game = True
-                menuImgAlreadyChosen = False
 
             if event.type == pygame.MOUSEBUTTONDOWN: #when click
                 mousePos = pygame.mouse.get_pos()
                 if mousePos[0] > 414 and mousePos[0] < 683 and mousePos[1] > 448 and mousePos[1] < 503: # to menu button click range
+                    pygame.mixer.unpause()
                     print('  mode -> MENU')
                     Game = False
                     Pause = False
                     Menu = True
+                    PauseDrawn = False
 
-                    menu_music = random.choice(menu_music_list)
-                    game_music = random.choice(game_music_list)
+                    menu_music = menu_music_list[3]
+                    menu_music.set_volume(0.2)
+                    game_music.set_volume(0)
+                    menu_music.play()
+            
+            if pygame.key.get_pressed()[pygame.K_ESCAPE] and not FirstEscapeInput:
+                pygame.mixer.unpause()
+                print('  mode -> GAME')
+                Pause = False
+                Menu = False
+                Game = True
+                PauseDrawn = False
+                menuImgAlreadyChosen = False
 
         if PauseDrawn == False:
             screen.blit(pauseScreenIMG, (122,4))
             PauseDrawn = True
+            FirstEscapeInput = False
     
-        pygame.mixer.pause()
         pygame.display.update()
         fps.tick(60)
